@@ -1,0 +1,56 @@
+# 모든 환경별 값·비밀값은 환경 변수로 주입한다. (QC-003)
+# 로컬 개발에서는 backend/.env 파일을 읽는다. (.env는 Git에 올리지 않는다)
+spring:
+  application:
+    name: cstudy
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate   # 스키마는 Flyway(db/migration)가 관리하고, JPA는 검증만 한다.
+  flyway:
+    enabled: true
+  cache:
+    type: caffeine
+    cache-names: majorCategories, categoryLists, contents, mediumCategories
+    caffeine:
+      # 조회용 GET 결과를 캐싱한다. (TC-004, NFR-001)
+      # DB에 분류·콘텐츠를 추가하면 이 시간 안에 화면에 반영된다. (QC-011)
+      spec: maximumSize=1000,expireAfterWrite=${CACHE_TTL_SECONDS:60}s
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    # 오류 응답에 내부 정보를 싣지 않는다. (QC-005)
+    include-message: never
+    include-stacktrace: never
+    include-binding-errors: never
+    include-exception: false
+    whitelabel:
+      enabled: false
+
+app:
+  time-zone: ${APP_TIME_ZONE:Asia/Seoul}
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+  cors:
+    allowed-origins: ${FRONTEND_ORIGINS}
+  media:
+    # DB에 상대 경로(/media/...)로 저장된 파일 URL 앞에 붙는 주소.
+    # 로컬: http://localhost:8080, 운영: S3(또는 CloudFront) 주소
+    base-url: ${MEDIA_BASE_URL}
+    # 로컬 개발 전용: true면 S3 대신 local-dir 폴더를 /media/** 로 서빙한다. 운영에서는 켜지 않는다.
+    serve-local: ${MEDIA_SERVE_LOCAL:false}
+    local-dir: ${MEDIA_LOCAL_DIR:../media}
+  admin:
+    # 값이 있으면 시작 시 운영자 계정을 1회 생성한다. (이미 있으면 건너뜀)
+    initial-id: ${ADMIN_ID:}
+    initial-password: ${ADMIN_PASSWORD:}

@@ -1,0 +1,10 @@
+# 비밀값·환경별 설정 (QC-003)
+.env
+.env.*
+!.env.example
+
+.DS_Store
+__pycache__/
+
+# 문서 원본(Office 임시 파일)
+~$*

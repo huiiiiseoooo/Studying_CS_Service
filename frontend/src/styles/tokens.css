@@ -1,0 +1,28 @@
+/* 디자인 토큰. 모든 화면과 애니메이션(tools/make_animations.py)이 이 값을 함께 쓴다. */
+:root {
+  color-scheme: light;
+
+  --bg: #f5f6fb;
+  --surface: #ffffff;
+  --surface-sunken: #f3f4fa;
+  --ink: #1b1d2a;
+  --muted: #6c7083;
+  --line: #d9dce8;
+  --accent: #3d4edb;
+  --accent-strong: #2e3cb8;
+  --accent-soft: #e4e7fb;
+  --warm: #f2a33a;
+  --warm-soft: #fdf1dd;
+  --warm-ink: #7a4a05;
+  --danger: #b3261e;
+
+  --font-sans: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Malgun Gothic', 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgb(27 29 42 / 6%), 0 8px 24px rgb(27 29 42 / 6%);
+  --page: 1080px;
+  --reading: 800px;
+}
