@@ -13,7 +13,7 @@ tools/      애니메이션 생성 스크립트
 
 필요한 것: JDK 17+, Node 20+, Docker(로컬 MySQL용)
 
-**1. DB** — MySQL 8 컨테이너를 띄운다. 테이블과 초기 데이터는 서버가 시작할 때 Flyway가 만든다.
+**1. DB** — MySQL 8 컨테이너를 띄운다(호스트 포트 **3307**, 맥에 설치된 MySQL의 3306과 겹치지 않게). 테이블과 초기 데이터는 서버가 시작할 때 Flyway가 만든다.
 
 ```bash
 docker compose up -d
