@@ -6,5 +6,9 @@
 .DS_Store
 __pycache__/
 
+# 편집기 개인 설정
+.idea/
+.vscode/
+
 # 문서 원본(Office 임시 파일)
 ~$*
