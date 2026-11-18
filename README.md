@@ -66,6 +66,8 @@ cd frontend && npm install && npm run dev
 
 1. 영상(MP4/GIF)과 대체 이미지를 `media/` (운영: S3)에 올린다.
 2. DB에 행을 추가한다. `category`(분류) → `cs_content`(설명, 마크다운) → `video`(파일 경로).
+   - 중분류(예: 스택, 큐)는 `category.overview`에 **그 자료구조 자체의 개념 설명**(마크다운)을 꼭 넣는다. 소분류(연산) 선택 화면에서 연산 목록 위에 보인다. 예시는 `V3__add_category_overview.sql`.
+   - 마크다운 코드 블록은 ` ```java ` 처럼 언어를 적는다. 화면에 언어 이름(Java)이 표시된다.
 3. '준비 중'인 대분류를 열려면 `UPDATE category SET active = TRUE WHERE id = ...`.
 
 캐시 시간(기본 60초)이 지나면 화면에 반영된다. 형식은 `backend/src/main/resources/db/migration/V2__seed_categories_and_contents.sql` 참고.

@@ -285,6 +285,23 @@ input {
   font-size: 17px;
 }
 
+/* 중분류 개념 설명 (소분류 선택 화면) */
+.overview {
+  max-width: var(--reading);
+  margin-bottom: 48px;
+  padding: 32px 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.section-title {
+  margin-bottom: 16px;
+  font-size: 22px;
+  letter-spacing: -0.01em;
+}
+
 .state {
   display: flex;
   flex-direction: column;
@@ -518,6 +535,29 @@ a.card:hover .card__go {
   border-radius: var(--radius);
   background: var(--ink);
   overflow-x: auto;
+}
+
+/* 언어가 적힌 코드 블록: 위에 언어 이름 머리표 */
+.code-block {
+  margin: 16px 0;
+  border-radius: var(--radius);
+  background: var(--ink);
+  overflow: hidden;
+}
+
+.code-block__lang {
+  padding: 8px 20px;
+  border-bottom: 1px solid rgb(255 255 255 / 10%);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #aab0d6;
+}
+
+.code-block pre {
+  margin: 0;
+  border-radius: 0;
 }
 
 .prose pre code {
@@ -870,6 +910,10 @@ a.card:hover .card__go {
   .admin {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .overview {
+    padding: 22px 20px;
   }
 }
 

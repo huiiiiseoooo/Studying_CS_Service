@@ -12,6 +12,8 @@ export interface Category {
 export interface CategoryList {
   /** 현재 위치까지의 상위 분류 (대 → 중 순서) */
   path: Category[]
+  /** 현재 분류 자체의 개념 설명(마크다운). 소분류 목록에서만 온다. */
+  overview: string | null
   items: Category[]
 }
 

@@ -32,6 +32,10 @@ public class CategoryModel {
     @Column(length = 200)
     private String description;
 
+    /** 중분류 자체에 대한 개념 설명(마크다운). 소분류 선택 화면에 보인다. 대·소분류는 비워 둔다. */
+    @Column(columnDefinition = "TEXT")
+    private String overview;
+
     @Column(name = "sort_order", nullable = false)
     private int sortOrder;
 
@@ -60,6 +64,10 @@ public class CategoryModel {
 
     public String getDescription() {
         return description;
+    }
+
+    public String getOverview() {
+        return overview;
     }
 
     public int getSortOrder() {

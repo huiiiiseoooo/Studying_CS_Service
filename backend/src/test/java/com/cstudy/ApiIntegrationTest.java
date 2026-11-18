@@ -60,7 +60,18 @@ class ApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.path[0].name").value("자료구조"))
                 .andExpect(jsonPath("$.items[0].name").value("스택"))
-                .andExpect(jsonPath("$.items[1].name").value("큐"));
+                .andExpect(jsonPath("$.items[1].name").value("큐"))
+                .andExpect(jsonPath("$.overview").doesNotExist());
+    }
+
+    @Test
+    void 소분류_목록은_중분류의_개념_설명을_함께_준다() throws Exception {
+        mvc.perform(get("/api/medium-categories/7/minor-categories"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.overview").value(org.hamcrest.Matchers.containsString("스택이란?")))
+                .andExpect(jsonPath("$.items[0].name").value("Push"));
+        mvc.perform(get("/api/medium-categories/8/minor-categories"))
+                .andExpect(jsonPath("$.overview").value(org.hamcrest.Matchers.containsString("큐란?")));
     }
 
     @Test

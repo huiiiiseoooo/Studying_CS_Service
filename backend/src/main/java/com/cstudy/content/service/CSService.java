@@ -40,7 +40,7 @@ public class CSService {
     /** 대분류 목록. (FR-001) */
     @Cacheable("majorCategories")
     public CategoryListResponse getMajorCategoryList() {
-        return new CategoryListResponse(List.of(),
+        return new CategoryListResponse(List.of(), null,
                 toResponses(categoryRepository.findByLevelOrderBySortOrderAscIdAsc(CategoryModel.LEVEL_MAJOR)));
     }
 
@@ -55,7 +55,9 @@ public class CSService {
         CategoryModel parent = categoryRepository.findById(parentId)
                 .filter(c -> c.getLevel() == parentLevel)
                 .orElseThrow(() -> ApiException.notFound("분류를 찾을 수 없습니다."));
-        return new CategoryListResponse(pathTo(parent),
+        // 중분류의 개념 설명은 그 안의 소분류(연산)를 고르는 화면에서 보여 준다.
+        String overview = parent.getLevel() == CategoryModel.LEVEL_MEDIUM ? parent.getOverview() : null;
+        return new CategoryListResponse(pathTo(parent), overview,
                 toResponses(categoryRepository.findByParentIdOrderBySortOrderAscIdAsc(parentId)));
     }
 

@@ -3,6 +3,7 @@ import { getMinorCategories } from '../api/content.ts'
 import { BackLink } from '../components/BackLink.tsx'
 import { Breadcrumb } from '../components/Breadcrumb.tsx'
 import { CategoryGrid } from '../components/CategoryGrid.tsx'
+import { Explanation } from '../components/Explanation.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { Loading, Notice } from '../components/States.tsx'
 import { useAsync } from '../hooks/useAsync.ts'
@@ -47,7 +48,13 @@ export function MinorPage() {
           <Breadcrumb
             items={[{ label: '대분류', to: '/' }, { label: major.name, to: parentHref }, { label: medium.name }]}
           />
-          <PageHeader eyebrow="소분류" title={medium.name} lead={medium.description} />
+          <PageHeader title={medium.name} lead={medium.description} />
+          {state.data.overview && (
+            <section className="overview" aria-label={`${medium.name} 개념 설명`}>
+              <Explanation markdown={state.data.overview} />
+            </section>
+          )}
+          <h2 className="section-title">학습 항목 선택</h2>
           {state.data.items.length === 0 ? (
             <Notice title="등록된 학습 항목이 없습니다.">
               <Link to={parentHref} className="btn">
