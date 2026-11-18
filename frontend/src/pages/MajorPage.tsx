@@ -13,7 +13,6 @@ export function MajorPage() {
   return (
     <>
       <PageHeader
-        eyebrow="대분류"
         title="무엇을 공부할까요?"
         lead="분야를 고르면 주제별로 동작 과정을 애니메이션과 설명으로 볼 수 있습니다."
       />

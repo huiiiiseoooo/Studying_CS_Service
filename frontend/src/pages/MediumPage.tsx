@@ -44,7 +44,7 @@ export function MediumPage() {
       {state.status === 'success' && major && (
         <>
           <Breadcrumb items={[{ label: '대분류', to: '/' }, { label: major.name }]} />
-          <PageHeader eyebrow="중분류" title={major.name} lead={major.description} />
+          <PageHeader title={major.name} lead={major.description} />
           {state.data.items.length === 0 ? (
             <Notice title="등록된 학습 항목이 없습니다.">
               <Link to="/" className="btn">
