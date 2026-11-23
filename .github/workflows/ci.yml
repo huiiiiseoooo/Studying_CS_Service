@@ -1,0 +1,203 @@
+name: CI/CD
+
+# 코드 push, main으로 향하는 PR, 수동 실행 시 검사한다.
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# main 배포는 중간에 취소하지 않고 순서대로 실행한다.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  backend:
+    name: Backend test and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Download source code
+        uses: actions/checkout@v7
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # 기존 테스트의 test 프로필은 메모리 DB(H2)를 사용한다.
+      - name: Run tests and build JAR
+        run: bash ./gradlew test bootJar --no-daemon
+
+      - name: Save tested JAR for image build
+        if: github.ref == 'refs/heads/main' && vars.CD_ENABLED == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-jar
+          path: backend/build/libs/backend-0.0.1-SNAPSHOT.jar
+          if-no-files-found: error
+          retention-days: 1
+
+  frontend:
+    name: Frontend check and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Download source code
+        uses: actions/checkout@v7
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check code
+        run: npm run lint
+
+      - name: Build frontend
+        run: npm run build
+        env:
+          VITE_API_BASE_URL: ''
+
+      - name: Save frontend build for image build
+        if: github.ref == 'refs/heads/main' && vars.CD_ENABLED == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-dist
+          path: frontend/dist/
+          if-no-files-found: error
+          retention-days: 1
+
+  deployment_checks:
+    name: Deployment script tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test deployment failure handling
+        run: python3 -m unittest discover -s deploy -p 'test_*.py' -v
+
+  publish:
+    name: Build and publish images
+    needs: [backend, frontend, deployment_checks]
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' && vars.CD_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      backend_digest: ${{ steps.backend.outputs.digest }}
+      frontend_digest: ${{ steps.frontend.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check deployment configuration
+        env:
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+          PUBLIC_ORIGIN: ${{ vars.PUBLIC_ORIGIN }}
+        run: |
+          for name in DOCKERHUB_TOKEN AWS_ROLE_ARN EC2_INSTANCE_ID PUBLIC_ORIGIN; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing repository setting: $name"
+              exit 1
+            fi
+          done
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: backend-jar
+          path: backend/build/libs
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: frontend-dist
+          path: frontend/dist
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: oowgnus
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Publish backend
+        id: backend
+        uses: docker/build-push-action@v7
+        with:
+          context: ./backend
+          file: backend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: oowgnus/cstudy-backend:sha-${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Publish frontend
+        id: frontend
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: frontend/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: oowgnus/cstudy-frontend:sha-${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+
+  deploy:
+    name: Deploy EC2 and verify website
+    needs: publish
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.event_name != 'pull_request' && vars.CD_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Get temporary AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ap-southeast-2
+          allowed-account-ids: '267653921725'
+          role-session-name: cstudy-${{ github.run_id }}
+
+      - name: Deploy exact image digests and wait for success
+        env:
+          EC2_INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
+          PUBLIC_ORIGIN: ${{ vars.PUBLIC_ORIGIN }}
+          BACKEND_IMAGE: oowgnus/cstudy-backend@${{ needs.publish.outputs.backend_digest }}
+          FRONTEND_IMAGE: oowgnus/cstudy-frontend@${{ needs.publish.outputs.frontend_digest }}
+          REVISION: ${{ github.sha }}
+        run: |
+          python3 deploy/send_command.py \
+            --instance-id "$EC2_INSTANCE_ID" \
+            --backend-image "$BACKEND_IMAGE" \
+            --frontend-image "$FRONTEND_IMAGE" \
+            --revision "$REVISION" \
+            --public-origin "$PUBLIC_ORIGIN"

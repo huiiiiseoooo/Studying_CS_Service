@@ -1,0 +1,55 @@
+name: cstudy
+
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: cstudy
+      MYSQL_USER: cstudy
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD required}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD required}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb-buffer-pool-size=128M
+      - --max-connections=30
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysqladmin ping -h 127.0.0.1 -u root --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  backend:
+    image: ${DOCKERHUB_USER:?DOCKERHUB_USER required}/cstudy-backend:v2
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_URL: "jdbc:mysql://mysql:3306/cstudy?serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
+      DB_USERNAME: cstudy
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET required}
+      FRONTEND_ORIGINS: ${PUBLIC_ORIGIN:?PUBLIC_ORIGIN required}
+      MEDIA_BASE_URL: "/"
+      MEDIA_SERVE_LOCAL: "false"
+      ADMIN_ID: admin
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD required}
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx384m"
+      TZ: Asia/Seoul
+
+  frontend:
+    image: ${DOCKERHUB_USER}/cstudy-frontend:v1
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  mysql_data:
