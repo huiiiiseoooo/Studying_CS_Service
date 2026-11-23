@@ -62,6 +62,14 @@ SSM 명령은 서버에서 root 권한으로 실행되므로 저장소 main에 �
 저장소 이전이나 OIDC subject 형식 변경 시 신뢰 정책도 검토한다.
 AWS 액세스 키와 SSH 개인키를 GitHub에 저장할 필요는 없다.
 
+정책 내용을 검토·승인한 뒤, 이 저장소를 받은 AWS CloudShell에서 일회성 설정을 실행할 수도 있다.
+기존 인스턴스 프로파일이나 같은 이름의 역할이 다른 용도로 사용 중이면 덮어쓰지 않고 중단한다.
+
+```bash
+python3 deploy/aws/configure.py          # 계정·인스턴스 확인만 수행
+python3 deploy/aws/configure.py --apply  # 검토한 역할·정책 생성 및 EC2 연결
+```
+
 ### 첫 실행
 
 1. PR의 CI 검사가 통과하는지 확인한다.
