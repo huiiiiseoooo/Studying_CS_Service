@@ -1,0 +1,8 @@
+**
+!frontend/
+!frontend/Dockerfile
+!frontend/nginx.conf
+!frontend/dist/
+!frontend/dist/**
+!media/
+!media/**

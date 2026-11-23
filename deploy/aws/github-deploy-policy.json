@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DeployOnlyToCstudyInstance",
+      "Effect": "Allow",
+      "Action": "ssm:SendCommand",
+      "Resource": [
+        "arn:aws:ssm:ap-southeast-2::document/AWS-RunShellScript",
+        "arn:aws:ec2:ap-southeast-2:267653921725:instance/i-00dc189aab9936eea"
+      ]
+    },
+    {
+      "Sid": "ReadCommandCompletion",
+      "Effect": "Allow",
+      "Action": "ssm:GetCommandInvocation",
+      "Resource": "*"
+    }
+  ]
+}
